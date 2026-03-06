@@ -1,98 +1,52 @@
 import { Request, Response } from "express";
+
 import * as expenseService from "../services/expense.service";
+import { ApiError } from "../utils/ApiError";
+import catchAsync from "../utils/catchAsync";
 
-const getErrorMessage = (error: unknown): string => {
-	if (error instanceof Error) {
-		return error.message;
-	}
-
-	return "Unknown error";
+const getRequestId = (req: Request): string => {
+	return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 };
 
-export const createExpense = async (req: Request, res: Response): Promise<void> => {
-	try {
-		const expense = await expenseService.createExpense(req.body);
-		res.status(201).json(expense);
-	} catch (error) {
-		res.status(400).json({
-			message: "Error creating expense",
-			error: getErrorMessage(error),
-		});
+export const createExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const expense = await expenseService.createExpense(req.body);
+	res.status(201).json(expense);
+});
+
+export const getExpenses = catchAsync(async (_req: Request, res: Response): Promise<void> => {
+	const expenses = await expenseService.queryExpenses();
+	res.status(200).json(expenses);
+});
+
+export const getExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const expense = await expenseService.getExpenseById(getRequestId(req));
+
+	if (!expense) {
+		throw new ApiError(404, "Expense not found");
 	}
-};
 
-export const getExpenses = async (_req: Request, res: Response): Promise<void> => {
-	try {
-		const expenses = await expenseService.queryExpenses();
-		res.status(200).json(expenses);
-	} catch (error) {
-		res.status(500).json({
-			message: "Error fetching expenses",
-			error: getErrorMessage(error),
-		});
+	res.status(200).json(expense);
+});
+
+export const updateExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const expense = await expenseService.updateExpenseById(getRequestId(req), req.body);
+
+	if (!expense) {
+		throw new ApiError(404, "Expense not found");
 	}
-};
 
-export const getExpense = async (req: Request, res: Response): Promise<void> => {
-	try {
-		const expense = await expenseService.getExpenseById(
-			Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
-		);
+	res.status(200).json(expense);
+});
 
-		if (!expense) {
-			res.status(404).json({ message: "Expense not found" });
-			return;
-		}
+export const deleteExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const expense = await expenseService.deleteExpenseById(getRequestId(req));
 
-		res.status(200).json(expense);
-	} catch (error) {
-		res.status(500).json({
-			message: "Error fetching expense",
-			error: getErrorMessage(error),
-		});
+	if (!expense) {
+		throw new ApiError(404, "Expense not found");
 	}
-};
 
-export const updateExpense = async (req: Request, res: Response): Promise<void> => {
-	try {
-		const expense = await expenseService.updateExpenseById(
-			Array.isArray(req.params.id) ? req.params.id[0] : req.params.id,
-			req.body
-		);
-
-		if (!expense) {
-			res.status(404).json({ message: "Expense not found" });
-			return;
-		}
-
-		res.status(200).json(expense);
-	} catch (error) {
-		res.status(400).json({
-			message: "Error updating expense",
-			error: getErrorMessage(error),
-		});
-	}
-};
-
-export const deleteExpense = async (req: Request, res: Response): Promise<void> => {
-	try {
-		const expense = await expenseService.deleteExpenseById(
-			Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
-		);
-
-		if (!expense) {
-			res.status(404).json({ message: "Expense not found" });
-			return;
-		}
-
-		res.status(200).json({
-			message: "Expense deleted successfully",
-			expense,
-		});
-	} catch (error) {
-		res.status(500).json({
-			message: "Error deleting expense",
-			error: getErrorMessage(error),
-		});
-	}
-};
+	res.status(200).json({
+		message: "Expense deleted successfully",
+		expense,
+	});
+});
