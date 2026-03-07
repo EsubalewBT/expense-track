@@ -14,5 +14,11 @@ if(error) {
 export const config = {
     env: envVars.NODE_ENV,
     port: envVars.PORT,
-    dbConnection: envVars.DB_CONNECTION
+    dbConnection: envVars.DB_CONNECTION,
+    jwt: {
+        secret: envVars.JWT_SECRET,
+        accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
+        refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
+    },
+
 }
