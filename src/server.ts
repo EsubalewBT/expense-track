@@ -7,13 +7,14 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import helmet from 'helmet';
 import passport from 'passport';
-import xss from 'xss-clean';
+import xss from 'xss';
 
 import { config } from './config/config';
 import { jwtStrategy } from './config/passport';
 import { connectDB } from './index';
 import { errorConverter, errorHandler } from './middleware/error';
 import { authRouter } from './route/auth.route';
+import { docsRouter } from './route/docs.route';
 import { expenseRouter } from './route/expense.route';
 
 const app = express();
@@ -40,6 +41,26 @@ const corsOptions: cors.CorsOptions = {
     credentials: true,
 };
 
+const sanitizeXss = (value: unknown): unknown => {
+    if (typeof value === 'string') {
+        return xss(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value.map((item) => sanitizeXss(item));
+    }
+
+    if (value && typeof value === 'object') {
+        Object.keys(value as Record<string, unknown>).forEach((key) => {
+            (value as Record<string, unknown>)[key] = sanitizeXss(
+                (value as Record<string, unknown>)[key],
+            );
+        });
+    }
+
+    return value;
+};
+
 app.use(
     helmet({
         contentSecurityPolicy: false,
@@ -50,8 +71,29 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(hpp());
-app.use(mongoSanitize());
-app.use(xss());
+app.use((req, _res, next) => {
+    // Express 5 exposes `req.query` as a getter-only property.
+    // Sanitize payloads in place to avoid reassigning `req.query`.
+    if (req.body) {
+        mongoSanitize.sanitize(req.body);
+    }
+
+    if (req.params) {
+        mongoSanitize.sanitize(req.params);
+    }
+
+    if (req.query) {
+        mongoSanitize.sanitize(req.query as Record<string, unknown>);
+    }
+
+    next();
+});
+app.use((req, _res, next) => {
+    sanitizeXss(req.body);
+    sanitizeXss(req.params);
+    sanitizeXss(req.query);
+    next();
+});
 app.use(compression());
 
 const authLimiter = rateLimit({
@@ -79,9 +121,10 @@ const apiLimiter = rateLimit({
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 
+
 app.use('/auth', authLimiter, authRouter);
 app.use('/expense', apiLimiter, expenseRouter);
-
+app.use('/docs', docsRouter);
 app.use(errorConverter);
 app.use(errorHandler);
 
