@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { CreateExpenseInput, Expense, ExpenseDocument, UpdateExpenseInput } from "../model/expense.model";
+import { IOptions, QueryResult } from "../model/plugins/paginate.types";
 
 export const createExpense = async (
 	userId: string,
@@ -12,9 +13,11 @@ export const createExpense = async (
 	return expense;
 };
 
-export const queryExpenses = async (userId: string): Promise<ExpenseDocument[]> => {
-	const expenses = await Expense.find({ user: userId }).sort({ date: -1 });
-	return expenses;
+export const queryExpenses = async (
+	userId: string,
+	options: IOptions = {}
+): Promise<QueryResult<ExpenseDocument>> => {
+	return Expense.paginate({ user: userId }, options);
 };
 
 export const getExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {

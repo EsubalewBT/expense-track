@@ -41,6 +41,15 @@ export const createExpenseSchema: ValidationSchema = {
 	body: createExpenseBodySchema,
 };
 
+export const getExpensesSchema: ValidationSchema = {
+	query: Joi.object({
+		limit: Joi.number().integer().min(1).max(100),
+		page: Joi.number().integer().min(1),
+		sortBy: Joi.string().trim(),
+		projectBy: Joi.string().trim(),
+	}),
+};
+
 export const updateExpenseSchema: ValidationSchema = {
 	params: Joi.object({
 		id: objectIdSchema,

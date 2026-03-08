@@ -1,4 +1,6 @@
 import mongoose, { HydratedDocument, InferSchemaType, Schema } from "mongoose";
+import paginate from "./plugins/paginate.plugin";
+import { IOptions, QueryResult } from "./plugins/paginate.types";
 import toJSON from "./plugins/toJSON.plugin";
 
     export const expenseCategories = [
@@ -49,9 +51,17 @@ import toJSON from "./plugins/toJSON.plugin";
     );
 
     expenseSchema.plugin(toJSON);
+    expenseSchema.plugin(paginate);
 
     export type ExpenseAttributes = InferSchemaType<typeof expenseSchema>;
     export type CreateExpenseInput = Omit<ExpenseAttributes, "user">;
     export type UpdateExpenseInput = Partial<CreateExpenseInput>;
     export type ExpenseDocument = HydratedDocument<ExpenseAttributes>;
-    export const Expense = mongoose.model<ExpenseAttributes>("Expense", expenseSchema);
+    export interface ExpenseModel extends mongoose.Model<ExpenseAttributes> {
+        paginate(
+            filter: Record<string, unknown>,
+            options?: IOptions
+        ): Promise<QueryResult<ExpenseDocument>>;
+    }
+
+    export const Expense = mongoose.model<ExpenseAttributes, ExpenseModel>("Expense", expenseSchema);
