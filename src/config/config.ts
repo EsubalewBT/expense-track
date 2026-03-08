@@ -26,5 +26,17 @@ export const config = {
         accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
         refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
     },
+    email: {
+        smtp: {
+            host: envVars.SMTP_HOST,
+            port: envVars.SMTP_PORT,
+            secure: envVars.SMTP_SECURE,
+            auth: {
+                user: envVars.SMTP_USERNAME,
+                pass: envVars.SMTP_PASSWORD,
+            },
+        },
+        from: envVars.EMAIL_FROM,
+    },
 
 }

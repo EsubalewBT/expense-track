@@ -123,3 +123,49 @@ export const refreshAuthTokens = async (refreshToken: string) => {
 		throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
 	}
 };
+
+export const generateVerifyEmailToken = async (
+	user: { id: string }
+): Promise<string> => {
+	const verifyEmailTokenExpires = dayjs().add(1, "day");
+	const verifyEmailToken = generateToken(
+		user.id,
+		verifyEmailTokenExpires,
+		tokenTypes.VERIFY_EMAIL
+	);
+
+	await saveToken(
+		verifyEmailToken,
+		user.id,
+		verifyEmailTokenExpires,
+		tokenTypes.VERIFY_EMAIL
+	);
+
+	return verifyEmailToken;
+};
+
+/**
+ * Generate reset password token
+ */
+export const generateResetPasswordToken = async (
+	email: string
+): Promise<string> => {
+	const user = await userService.getUserByEmail(email);
+
+	if (!user) {
+		throw new ApiError(httpStatus.NOT_FOUND, "No users found with this email");
+	}
+
+	const userId = user._id.toString();
+
+	const expires = dayjs().add(config.jwt.refreshExpirationDays, "minutes");
+	const resetPasswordToken = generateToken(
+		userId,
+		expires,
+		tokenTypes.RESET_PASSWORD
+	);
+
+	await saveToken(resetPasswordToken, userId, expires, tokenTypes.RESET_PASSWORD);
+
+	return resetPasswordToken;
+};

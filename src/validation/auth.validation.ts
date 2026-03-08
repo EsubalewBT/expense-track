@@ -35,3 +35,18 @@ export const refreshTokensSchema = {
 		refreshToken: Joi.string().required(),
 	}),
 };
+
+export const forgotPasswordSchema = {
+	body: Joi.object().keys({
+		email: Joi.string().required().email(),
+	}),
+};
+
+export const resetPasswordSchema = {
+	query: Joi.object().keys({
+		token: Joi.string().required(),
+	}),
+	body: Joi.object().keys({
+		password: Joi.string().required().custom(password),
+	}),
+};
