@@ -14,6 +14,7 @@ router.use(auth());
 
 router.post("/", validate(createExpenseSchema), expenseController.createExpense);
 router.get("/", validate(getExpensesSchema), expenseController.getExpenses);
+router.get("/stats", expenseController.getStats);
 
 router.get("/:id", validate(getExpenseIdSchema), expenseController.getExpense);
 router.patch("/:id", validate(updateExpenseSchema), expenseController.updateExpense);

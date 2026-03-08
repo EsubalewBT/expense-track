@@ -11,10 +11,16 @@ if(error) {
     throw new Error(`Config validation error: ${error.message}`);
 }
 
+const corsOrigins = String(envVars.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin: string) => origin.trim())
+    .filter(Boolean);
+
 export const config = {
     env: envVars.NODE_ENV,
     port: envVars.PORT,
     dbConnection: envVars.DB_CONNECTION,
+    corsOrigins,
     jwt: {
         secret: envVars.JWT_SECRET,
         accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,

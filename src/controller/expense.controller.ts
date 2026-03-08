@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import httpStatus from "http-status";
 
 import * as expenseService from "../services/expense.service";
 import { IOptions } from "../model/plugins/paginate.types";
@@ -49,6 +50,11 @@ export const getExpenses = catchAsync(async (_req: Request, res: Response): Prom
 		getPaginationOptions(_req)
 	);
 	res.status(200).json(expenses);
+});
+
+export const getStats = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const stats = await expenseService.getExpenseStats(getAuthenticatedUserId(req));
+	res.status(httpStatus.OK).json(stats);
 });
 
 export const getExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
