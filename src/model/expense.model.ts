@@ -1,4 +1,5 @@
-    import mongoose, { HydratedDocument, InferSchemaType, Schema } from "mongoose";
+import mongoose, { HydratedDocument, InferSchemaType, Schema } from "mongoose";
+import toJSON from "./plugins/toJSON.plugin";
 
     export const expenseCategories = [
         "Food",
@@ -10,6 +11,13 @@
 
     const expenseSchema = new Schema(
         {
+            user: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                required: true,
+                index: true,
+                private: true,
+            },
             title: {
                 type: String,
                 required: true,
@@ -40,6 +48,10 @@
         }
     );
 
+    expenseSchema.plugin(toJSON);
+
     export type ExpenseAttributes = InferSchemaType<typeof expenseSchema>;
+    export type CreateExpenseInput = Omit<ExpenseAttributes, "user">;
+    export type UpdateExpenseInput = Partial<CreateExpenseInput>;
     export type ExpenseDocument = HydratedDocument<ExpenseAttributes>;
     export const Expense = mongoose.model<ExpenseAttributes>("Expense", expenseSchema);

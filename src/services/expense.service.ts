@@ -1,33 +1,40 @@
 import mongoose from "mongoose";
-import { Expense, ExpenseAttributes, ExpenseDocument } from "../model/expense.model";
+import { CreateExpenseInput, Expense, ExpenseDocument, UpdateExpenseInput } from "../model/expense.model";
 
-export const createExpense = async (expenseBody: ExpenseAttributes): Promise<ExpenseDocument> => {
-	const expense = await Expense.create(expenseBody);
+export const createExpense = async (
+	userId: string,
+	expenseBody: CreateExpenseInput
+): Promise<ExpenseDocument> => {
+	const expense = await Expense.create({
+		...expenseBody,
+		user: userId,
+	});
 	return expense;
 };
 
-export const queryExpenses = async (): Promise<ExpenseDocument[]> => {
-	const expenses = await Expense.find().sort({ date: -1 });
+export const queryExpenses = async (userId: string): Promise<ExpenseDocument[]> => {
+	const expenses = await Expense.find({ user: userId }).sort({ date: -1 });
 	return expenses;
 };
 
-export const getExpenseById = async (id: string): Promise<ExpenseDocument | null> => {
+export const getExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {
 	if (!mongoose.isValidObjectId(id)) {
 		return null;
 	}
 
-	return Expense.findById(id);
+	return Expense.findOne({ _id: id, user: userId });
 };
 
 export const updateExpenseById = async (
 	id: string,
-	updateBody: Partial<ExpenseAttributes>
+	userId: string,
+	updateBody: UpdateExpenseInput
 ): Promise<ExpenseDocument | null> => {
 	if (!mongoose.isValidObjectId(id)) {
 		return null;
 	}
 
-	const expense = await Expense.findByIdAndUpdate(id, updateBody, {
+	const expense = await Expense.findOneAndUpdate({ _id: id, user: userId }, updateBody, {
 		new: true,
 		runValidators: true,
 	});
@@ -35,11 +42,11 @@ export const updateExpenseById = async (
 	return expense;
 };
 
-export const deleteExpenseById = async (id: string): Promise<ExpenseDocument | null> => {
+export const deleteExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {
 	if (!mongoose.isValidObjectId(id)) {
 		return null;
 	}
 
-	const expense = await Expense.findByIdAndDelete(id);
+	const expense = await Expense.findOneAndDelete({ _id: id, user: userId });
 	return expense;
 };

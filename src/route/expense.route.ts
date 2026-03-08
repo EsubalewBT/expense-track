@@ -9,7 +9,7 @@ router.use(auth());
 router.post("/", validate(createExpenseSchema), expenseController.createExpense);
 router.get("/",  expenseController.getExpenses);
 
-router.get("/:id", expenseController.getExpense);
+router.get("/:id", validate(getExpenseIdSchema), expenseController.getExpense);
 router.patch("/:id", validate(updateExpenseSchema), expenseController.updateExpense);
 router.delete("/:id", validate(deleteExpenseSchema), expenseController.deleteExpense);
 
