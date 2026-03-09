@@ -2,8 +2,6 @@ import Joi from 'joi';
 
 import type { ValidationSchema } from '../middleware/validate';
 
-const expenseCategories = ['Food', 'Transport', 'Entertainment', 'Health', 'Other'] as const;
-
 const objectIdSchema = Joi.string()
 	.length(24)
 	.hex()
@@ -18,9 +16,7 @@ const objectIdSchema = Joi.string()
 const createExpenseBodySchema = Joi.object({
 	title: Joi.string().trim().min(1).max(120).required(),
 	amount: Joi.number().min(0).required(),
-	category: Joi.string()
-		.valid(...expenseCategories)
-		.required(),
+	category: Joi.string().trim().min(1).max(50).required(),
 	description: Joi.string().trim().max(1000).allow('').optional(),
 	date: Joi.date().optional(),
 });
@@ -28,7 +24,7 @@ const createExpenseBodySchema = Joi.object({
 const updateExpenseBodySchema = Joi.object({
 	title: Joi.string().trim().min(1).max(120),
 	amount: Joi.number().min(0),
-	category: Joi.string().valid(...expenseCategories),
+	category: Joi.string().trim().min(1).max(50),
 	description: Joi.string().trim().max(1000).allow(''),
 	date: Joi.date(),
 })

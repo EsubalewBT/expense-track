@@ -27,7 +27,7 @@
  *           description: Cost of the item
  *         category:
  *           type: string
- *           enum: [Food, Transport, Entertainment, Health, Other]
+ *           description: Category label chosen by the user
  *         date:
  *           type: string
  *           format: date

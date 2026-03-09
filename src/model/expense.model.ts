@@ -3,14 +3,6 @@ import paginate from "./plugins/paginate.plugin";
 import { IOptions, QueryResult } from "./plugins/paginate.types";
 import toJSON from "./plugins/toJSON.plugin";
 
-    export const expenseCategories = [
-        "Food",
-        "Transport",
-        "Entertainment",
-        "Health",
-        "Other",
-    ] as const;
-
     const expenseSchema = new Schema(
         {
             user: {
@@ -37,8 +29,9 @@ import toJSON from "./plugins/toJSON.plugin";
             category: {
                 type: String,
                 required: true,
-                enum: expenseCategories,
                 trim: true,
+                minlength: 1,
+                maxlength: 50,
             },
             description: {
                 type: String,
