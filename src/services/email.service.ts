@@ -3,6 +3,11 @@ import { config } from '../config/config';
 
 const transport = nodemailer.createTransport(config.email.smtp);
 
+export type EmailDispatchResult = {
+	messageId: string;
+	previewUrl: string | null;
+};
+
 /* istanbul ignore next */
 if (config.env !== 'test') {
 	transport
@@ -23,33 +28,50 @@ export const sendEmail = async (
 	subject: string,
 	text: string,
 	html?: string,
-): Promise<void> => {
+): Promise<EmailDispatchResult> => {
 	if (config.env === 'test') {
-		return;
+		return {
+			messageId: 'test-message-id',
+			previewUrl: null,
+		};
 	}
 
-	await transport.sendMail({
+	const info = await transport.sendMail({
 		from: config.email.from,
 		to,
 		subject,
 		text,
 		html,
 	});
+
+	const testMessageUrl = nodemailer.getTestMessageUrl(info);
+	const previewUrl = typeof testMessageUrl === 'string' ? testMessageUrl : null;
+	if (previewUrl) {
+		console.info(`Email preview URL: ${previewUrl}`);
+	}
+
+	return {
+		messageId: info.messageId,
+		previewUrl,
+	};
 };
 
 /**
  * Sends a reset-password email with a tokenized reset URL.
  */
-export const sendResetPasswordEmail = async (to: string, token: string): Promise<void> => {
+export const sendResetPasswordEmail = async (
+	to: string,
+	token: string
+): Promise<EmailDispatchResult> => {
 	const subject = 'Reset password';
-	const resetPasswordUrl = `http://localhost:3000/reset-password?token=${token}`;
+	const resetPasswordUrl = `http://localhost:3000/auth/reset-password?token=${token}`;
 	const text = [
 		'Dear user,',
 		`To reset your password, click on this link: ${resetPasswordUrl}`,
 		'If you did not request a password reset, you can ignore this email.',
 	].join('\n');
 
-	await sendEmail(to, subject, text);
+	return sendEmail(to, subject, text);
 };
 
 /**

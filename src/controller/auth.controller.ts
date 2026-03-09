@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../utils/catchAsync";
+import { config } from "../config/config";
 import * as authService from "../services/auth.ervice";
 import * as tokenService from "../services/token.service";
 import * as emailService from "../services/email.service";
@@ -43,17 +44,29 @@ export const refreshToken = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+	let previewUrl: string | null = null;
+
 	try {
 		const resetPasswordToken = await tokenService.generateResetPasswordToken(
 			req.body.email
 		);
-		await emailService.sendResetPasswordEmail(
+		const emailDispatch = await emailService.sendResetPasswordEmail(
 			req.body.email,
 			resetPasswordToken
 		);
+		previewUrl = emailDispatch.previewUrl;
 	} catch (error: unknown) {
 		// Prevents user-enumeration by always returning 204.
 		console.warn("Forgot-password email dispatch skipped", error);
+	}
+
+	if (config.env === "development") {
+		res.status(httpStatus.OK).json({
+			message:
+				"If an account exists for this email, reset instructions were prepared.",
+			previewUrl,
+		});
+		return;
 	}
 
 	res.status(httpStatus.NO_CONTENT).send();

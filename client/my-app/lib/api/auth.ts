@@ -22,6 +22,16 @@ export interface ForgotPasswordPayload {
 	email: string;
 }
 
+export interface ForgotPasswordResponse {
+	message: string;
+	previewUrl: string | null;
+}
+
+export interface ResetPasswordPayload {
+	token: string;
+	password: string;
+}
+
 export interface AuthUser {
 	id: string;
 	name: string;
@@ -58,8 +68,23 @@ export async function registerFn(payload: RegisterPayload): Promise<AuthResponse
 	return response.data;
 }
 
-export async function forgotPasswordFn(payload: ForgotPasswordPayload): Promise<void> {
-	await api.post('/api/auth/forgot-password', payload);
+export async function forgotPasswordFn(
+	payload: ForgotPasswordPayload
+): Promise<ForgotPasswordResponse | undefined> {
+	const response = await api.post<ForgotPasswordResponse>(
+		'/api/auth/forgot-password',
+		payload
+	);
+	return response.data;
+}
+
+export async function resetPasswordFn(
+	payload: ResetPasswordPayload
+): Promise<void> {
+	await api.post(
+		`/api/auth/reset-password?token=${encodeURIComponent(payload.token)}`,
+		{ password: payload.password }
+	);
 }
 
 function persistAuthSession(data: AuthResponse) {
@@ -83,9 +108,15 @@ type RegisterMutationOptions = UseMutationOptions<
 >;
 
 type ForgotPasswordMutationOptions = UseMutationOptions<
-	void,
+	ForgotPasswordResponse | undefined,
 	AxiosError<ApiErrorResponse>,
 	ForgotPasswordPayload
+>;
+
+type ResetPasswordMutationOptions = UseMutationOptions<
+	void,
+	AxiosError<ApiErrorResponse>,
+	ResetPasswordPayload
 >;
 
 const AuthApi = {
@@ -135,13 +166,24 @@ const AuthApi = {
 		useMutation(
 			options?: ForgotPasswordMutationOptions
 		): UseMutationResult<
-			void,
+			ForgotPasswordResponse | undefined,
 			AxiosError<ApiErrorResponse>,
 			ForgotPasswordPayload
 		> {
 			return useMutation({
 				mutationKey: ['auth', 'forgot-password'],
 				mutationFn: forgotPasswordFn,
+				...options,
+			});
+		},
+	},
+	ResetPassword: {
+		useMutation(
+			options?: ResetPasswordMutationOptions
+		): UseMutationResult<void, AxiosError<ApiErrorResponse>, ResetPasswordPayload> {
+			return useMutation({
+				mutationKey: ['auth', 'reset-password'],
+				mutationFn: resetPasswordFn,
 				...options,
 			});
 		},

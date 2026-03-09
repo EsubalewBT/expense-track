@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 		<div className="min-h-screen bg-[radial-gradient(circle_at_10%_20%,#1e3a8a20_0%,transparent_35%),radial-gradient(circle_at_95%_0%,#0f766e22_0%,transparent_30%),linear-gradient(180deg,#070b14_0%,#0b1220_45%,#0f172a_100%)] text-slate-100">
 			<aside className="fixed left-0 top-0 hidden h-screen w-72 border-r border-white/10 bg-slate-950/55 px-5 py-6 backdrop-blur-xl lg:flex lg:flex-col">
 				<div className="mb-8 border-b border-white/10 pb-5">
-					<p className="text-xs font-semibold tracking-[0.22em] text-cyan-200/90">EXPENSEFLOW</p>
+					<p className="text-xs font-semibold tracking-[0.22em] text-cyan-200/90">EXPENSE | FLOW</p>
 					<h1 className="mt-2 text-2xl font-semibold text-white [font-family:var(--font-display)]">Dashboard</h1>
 				</div>
 

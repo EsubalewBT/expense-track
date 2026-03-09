@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useSyncExternalStore } from 'react';
 
-import AddExpenseSheet from '@/components/features/AddExpenseSheet';
+import AddExpenseSheet from '@/components/features/AddExpensesSheet';
 import { ExpenseApi } from '@/lib/api/expense';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

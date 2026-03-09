@@ -36,6 +36,7 @@ function getApiErrorMessage(error: unknown) {
 
 export default function ForgotPasswordPage() {
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -44,7 +45,8 @@ export default function ForgotPasswordPage() {
   });
 
   const forgotPasswordMutation = AuthApi.ForgotPassword.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setPreviewUrl(data?.previewUrl ?? null);
       form.setError('root', {});
     },
     onError: (error) => {
@@ -54,6 +56,7 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = (values: ForgotPasswordFormValues) => {
     form.clearErrors('root');
+    setPreviewUrl(null);
     setSubmittedEmail(values.email);
     forgotPasswordMutation.mutate(values);
   };
@@ -102,6 +105,19 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
                 </div>
+                {previewUrl ? (
+                  <div className="rounded-xl border border-cyan-400/40 bg-cyan-950/30 p-4 text-cyan-100">
+                    <p className="text-sm font-semibold">Development email preview</p>
+                    <p className="mt-1 text-sm text-cyan-200/90">
+                      You are using a test SMTP inbox. Open your reset email here.
+                    </p>
+                    <Button asChild size="sm" variant="outline" className="mt-3 border-cyan-300/50 text-cyan-100 hover:bg-cyan-300/10">
+                      <a href={previewUrl} target="_blank" rel="noreferrer">
+                        Open Email Preview
+                      </a>
+                    </Button>
+                  </div>
+                ) : null}
                 <Button asChild size="lg" className="w-full">
                   <Link href="/auth/sign-in">Return to sign in</Link>
                 </Button>

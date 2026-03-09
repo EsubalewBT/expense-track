@@ -83,7 +83,7 @@ export default function SignInPage() {
 					<div className="rounded-2xl border border-white/15 bg-slate-950/30 p-4 text-sm text-slate-200">
 						<p className="font-medium text-white">Tip</p>
 						<p className="mt-1">
-							Use the same account you registered with your API to access your dashboard data.
+							Use the same account you registeredto access your dashboard data.
 						</p>
 					</div>
 				</div>
