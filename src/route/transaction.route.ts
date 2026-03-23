@@ -43,15 +43,12 @@
  */
 
 import { Router } from "express";
-import * as expenseController from "../controller/expense.controller";
+import * as expenseController from "../controller/transaction.controller";
 import validate from "../middleware/validate";
 import {
-	createExpenseSchema,
-	deleteExpenseSchema,
-	getExpenseIdSchema,
-	getExpensesSchema,
-	updateExpenseSchema,
-} from "../validation/expense.validation";
+	createTransactionSchema,
+	updateTransactionSchema,
+} from "../validation/transaction.validation";
 import { auth } from "../middleware/auth";
 const router = Router();
 router.use(auth());
@@ -99,8 +96,8 @@ router.use(auth());
  *       "400":
  *         description: Bad Request (Validation failed)
  */
-router.post("/", validate(createExpenseSchema), expenseController.createExpense);
-router.get("/", validate(getExpensesSchema), expenseController.getExpenses);
+router.post("/", validate(createTransactionSchema), expenseController.createExpense);
+router.get("/", expenseController.getExpenses);
 
 /**
  * @swagger
@@ -129,8 +126,8 @@ router.get("/", validate(getExpensesSchema), expenseController.getExpenses);
  */
 router.get("/stats", expenseController.getStats);
 
-router.get("/:id", validate(getExpenseIdSchema), expenseController.getExpense);
-router.patch("/:id", validate(updateExpenseSchema), expenseController.updateExpense);
-router.delete("/:id", validate(deleteExpenseSchema), expenseController.deleteExpense);
+router.get("/:id", expenseController.getExpense);
+router.patch("/:id", validate(updateTransactionSchema), expenseController.updateExpense);
+router.delete("/:id", expenseController.deleteExpense);
 
 export const expenseRouter = router;

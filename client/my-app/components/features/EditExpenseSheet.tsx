@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiErrorResponse, Expense, ExpenseApi } from '@/lib/api/expense';
 
@@ -112,7 +112,7 @@ export default function EditExpenseSheet({ expense, onUpdated }: EditExpenseShee
 	const isSubmitting = updateExpenseMutation.isPending;
 
 	return (
-		<Sheet
+		<Dialog
 			open={open}
 			onOpenChange={(nextOpen) => {
 				setOpen(nextOpen);
@@ -122,7 +122,7 @@ export default function EditExpenseSheet({ expense, onUpdated }: EditExpenseShee
 				}
 			}}
 		>
-			<SheetTrigger asChild>
+			<DialogTrigger asChild>
 				<Button
 					variant="outline"
 					className="gap-2 border-slate-500 bg-slate-900 text-slate-100 hover:bg-slate-800"
@@ -130,16 +130,16 @@ export default function EditExpenseSheet({ expense, onUpdated }: EditExpenseShee
 					<Pencil size={16} />
 					Edit
 				</Button>
-			</SheetTrigger>
+			</DialogTrigger>
 
-			<SheetContent className="w-full border-slate-800 bg-slate-900 p-0 text-white sm:max-w-xl md:max-w-2xl">
+			<DialogContent className="w-full border border-slate-800 bg-slate-900 p-0 text-white sm:max-w-xl md:max-w-2xl">
 				<div className="flex h-full flex-col">
-					<SheetHeader className="border-b border-slate-800 px-6 py-5 text-left">
-						<SheetTitle className="text-white">Edit Expense</SheetTitle>
-						<SheetDescription className="text-slate-400">
+					<DialogHeader className="border-b border-slate-800 px-6 py-5 text-left">
+						<DialogTitle className="text-white">Edit Expense</DialogTitle>
+						<DialogDescription className="text-slate-400">
 							Update any field. You can choose a suggested category or type a custom one.
-						</SheetDescription>
-					</SheetHeader>
+						</DialogDescription>
+					</DialogHeader>
 
 					<form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col overflow-y-auto px-6 py-6" noValidate>
 						<div className="flex-1 space-y-5">
@@ -243,7 +243,7 @@ export default function EditExpenseSheet({ expense, onUpdated }: EditExpenseShee
 						</Button>
 					</form>
 				</div>
-			</SheetContent>
-		</Sheet>
+			</DialogContent>
+		</Dialog>
 	);
 }

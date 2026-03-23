@@ -1,18 +1,25 @@
 import mongoose from "mongoose";
-import { CreateExpenseInput, Expense, ExpenseDocument, UpdateExpenseInput } from "../model/expense.model";
+import {
+	Transaction,
+	TransactionAttributes,
+	TransactionDocument,
+} from "../model/transaction.model";
 import { IOptions, QueryResult } from "../model/plugins/paginate.types";
 
+type CreateExpenseInput = Omit<TransactionAttributes, "user">;
+type UpdateExpenseInput = Partial<CreateExpenseInput>;
+type ExpenseDocument = TransactionDocument;
+
 export interface ExpenseCategoryStat {
-	category: string;
-	totalAmount: number;
-	count: number;
+	type: "INCOME" | "EXPENSE";
+	total: number;
 }
 
 export const createExpense = async (
 	userId: string,
 	expenseBody: CreateExpenseInput
 ): Promise<ExpenseDocument> => {
-	const expense = await Expense.create({
+	const expense = await Transaction.create({
 		...expenseBody,
 		user: userId,
 	});
@@ -23,7 +30,7 @@ export const queryExpenses = async (
 	userId: string,
 	options: IOptions = {}
 ): Promise<QueryResult<ExpenseDocument>> => {
-	return Expense.paginate({ user: userId }, options);
+	return Transaction.paginate({ user: userId }, options);
 };
 
 export const getExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {
@@ -31,7 +38,7 @@ export const getExpenseById = async (id: string, userId: string): Promise<Expens
 		return null;
 	}
 
-	return Expense.findOne({ _id: id, user: userId });
+	return Transaction.findOne({ _id: id, user: userId });
 };
 
 export const updateExpenseById = async (
@@ -43,7 +50,7 @@ export const updateExpenseById = async (
 		return null;
 	}
 
-	const expense = await Expense.findOneAndUpdate({ _id: id, user: userId }, updateBody, {
+	const expense = await Transaction.findOneAndUpdate({ _id: id, user: userId }, updateBody, {
 		new: true,
 		runValidators: true,
 	});
@@ -56,7 +63,7 @@ export const deleteExpenseById = async (id: string, userId: string): Promise<Exp
 		return null;
 	}
 
-	const expense = await Expense.findOneAndDelete({ _id: id, user: userId });
+	const expense = await Transaction.findOneAndDelete({ _id: id, user: userId });
 	return expense;
 };
 
@@ -67,27 +74,25 @@ export const getExpenseStats = async (userId: string): Promise<ExpenseCategorySt
 
 	const userObjectId = new mongoose.Types.ObjectId(userId);
 
-	return Expense.aggregate<ExpenseCategoryStat>([
+	return Transaction.aggregate<ExpenseCategoryStat>([
 		{
 			$match: { user: userObjectId },
 		},
 		{
 			$group: {
-				_id: "$category",
-				totalAmount: { $sum: "$amount" },
-				count: { $sum: 1 },
+				_id: "$type",
+				total: { $sum: "$amount" },
 			},
 		},
 		{
 			$project: {
 				_id: 0,
-				category: "$_id",
-				totalAmount: 1,
-				count: 1,
+				type: "$_id",
+				total: 1,
 			},
 		},
 		{
-			$sort: { totalAmount: -1 },
+			$sort: { total: -1 },
 		},
 	]).exec();
 };

@@ -13,7 +13,8 @@ import { jwtStrategy } from './config/passport';
 import { errorConverter, errorHandler } from './middleware/error';
 import { authRouter } from './route/auth.route';
 import { docsRouter } from './route/docs.route';
-import { expenseRouter } from './route/expense.route';
+import { expenseRouter } from './route/transaction.route';
+import { fintrackRouter } from './route/fintrack.route';
 
 const app = express();
 
@@ -118,6 +119,7 @@ passport.use('jwt', jwtStrategy);
 
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/expense', apiLimiter, expenseRouter);
+app.use('/api/fintrack', apiLimiter, fintrackRouter);
 app.use('/api/docs', docsRouter);
 app.use(errorConverter);
 app.use(errorHandler);

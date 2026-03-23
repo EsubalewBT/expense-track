@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
 
-import * as expenseService from "../services/expense.service";
+import * as expenseService from "../services/transaction.service";
 import { IOptions } from "../model/plugins/paginate.types";
 import { ApiError } from "../utils/ApiError";
 import catchAsync from "../utils/catchAsync";

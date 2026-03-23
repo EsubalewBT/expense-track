@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from '@/components/ui/sheet';
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { ApiErrorResponse, ExpenseApi } from '@/lib/api/expense';
 
@@ -92,7 +92,7 @@ export default function AddExpensesSheet() {
 	const isSubmitting = createExpenseMutation.isPending;
 
 	return (
-		<Sheet
+		<Dialog
 			open={open}
 			onOpenChange={(nextOpen) => {
 				setOpen(nextOpen);
@@ -101,21 +101,21 @@ export default function AddExpensesSheet() {
 				}
 			}}
 		>
-			<SheetTrigger asChild>
+			<DialogTrigger asChild>
 				<Button className="gap-2 bg-teal-500 font-semibold text-slate-900 hover:bg-teal-400">
 					<Plus size={18} />
 					New Expense
 				</Button>
-			</SheetTrigger>
+			</DialogTrigger>
 
-			<SheetContent className="w-full border-slate-800 bg-slate-900 p-0 text-white sm:max-w-xl md:max-w-2xl">
+			<DialogContent className="w-full border border-slate-800 bg-slate-900 p-0 text-white sm:max-w-xl md:max-w-2xl">
 				<div className="flex h-full flex-col">
-					<SheetHeader className="border-b border-slate-800 px-6 py-5 text-left">
-						<SheetTitle className="text-white">Record Expense</SheetTitle>
-						<SheetDescription className="text-slate-400">
+					<DialogHeader className="border-b border-slate-800 px-6 py-5 text-left">
+						<DialogTitle className="text-white">Record Expense</DialogTitle>
+						<DialogDescription className="text-slate-400">
 							Add a new transaction to your ledger. Dashboard data refreshes automatically.
-						</SheetDescription>
-					</SheetHeader>
+						</DialogDescription>
+					</DialogHeader>
 
 					<form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col overflow-y-auto px-6 py-6" noValidate>
 						<div className="flex-1 space-y-5">
@@ -221,7 +221,7 @@ export default function AddExpensesSheet() {
 					</Button>
 					</form>
 				</div>
-			</SheetContent>
-		</Sheet>
+			</DialogContent>
+		</Dialog>
 	);
 }

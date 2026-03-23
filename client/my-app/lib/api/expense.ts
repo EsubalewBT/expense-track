@@ -66,6 +66,11 @@ export interface ExpenseStat {
 	count: number;
 }
 
+export interface GlobalTransactionStat {
+	type: 'INCOME' | 'EXPENSE';
+	total: number;
+}
+
 export interface ExpenseListParams {
 	page?: number;
 	limit?: number;
@@ -118,6 +123,11 @@ export async function getExpenseListFn(
 
 export async function getExpenseStatsFn(): Promise<ExpenseStat[]> {
 	const response = await api.get<ExpenseStat[]>('/api/expense/stats');
+	return response.data;
+}
+
+export async function getGlobalStatsFn(): Promise<GlobalTransactionStat[]> {
+	const response = await api.get<GlobalTransactionStat[]>('/api/expense/stats');
 	return response.data;
 }
 
@@ -223,6 +233,16 @@ const ExpenseApi = {
 				queryFn: getExpenseStatsFn,
 			});
 		},
+	},
+};
+
+export const TransactionApi = {
+	GetGlobalStats: {
+		useQuery: (): UseQueryResult<GlobalTransactionStat[]> =>
+			useQuery({
+				queryKey: ['global-stats'],
+				queryFn: getGlobalStatsFn,
+			}),
 	},
 };
 
