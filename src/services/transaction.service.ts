@@ -96,3 +96,29 @@ export const getExpenseStats = async (userId: string): Promise<ExpenseCategorySt
 		},
 	]).exec();
 };
+
+/**
+ * Get category breakdown for a specific vault (For the Donut Chart)
+ */
+export const getVaultCategoryStats = async (fintrackId: string, userId: string) => {
+	if (!mongoose.isValidObjectId(fintrackId) || !mongoose.isValidObjectId(userId)) {
+		return [];
+	}
+
+	return Transaction.aggregate([
+		{
+			$match: {
+				fintrack: new mongoose.Types.ObjectId(fintrackId),
+				user: new mongoose.Types.ObjectId(userId),
+				type: "EXPENSE",
+			},
+		},
+		{
+			$group: {
+				_id: "$category",
+				total: { $sum: "$amount" },
+			},
+		},
+		{ $sort: { total: -1 } },
+	]);
+};

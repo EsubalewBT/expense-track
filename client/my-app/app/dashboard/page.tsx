@@ -1,20 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { Plus, TrendingUp, Layers } from 'lucide-react';
-import { ExpenseApi, TransactionApi } from '@/lib/api/expense';
+import { TransactionApi } from '@/lib/api/expense';
+import { FintrackApi } from '@/lib/api/fintrack';
 import FintrackCard from '@/components/features/fintrack.feature';
+import { CreateFintrackModal } from '@/components/features/Fintrack.modal';
 import { useRouter } from 'next/navigation';
 import { useFintrackStore } from '@/store/useFintrack';
-import { FintrackApi } from '@/lib/api/fintrack';
 
 export default function DashboardLobby() {
   const router = useRouter();
   const { setActiveFintrack } = useFintrackStore();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   // 1. Fetch data from your real backend
-  const { data: fintrackResponse, isLoading } = ExpenseApi.GetList.useQuery({ page: 1, limit: 12 });
+  const { data: fintracks = [], isLoading } = FintrackApi.GetAll.useQuery();
   const { data: globalStats } = TransactionApi.GetGlobalStats.useQuery();
-  const fintracks = fintrackResponse?.results || [];
 
   // Calculate totals for the Hero Card
   const totalIncome = globalStats?.find((s: { type: 'INCOME' | 'EXPENSE'; total: number }) => s.type === 'INCOME')?.total || 0;
@@ -24,6 +26,7 @@ export default function DashboardLobby() {
   if (isLoading) return <div className="p-10 text-white animate-pulse">Initializing Dashboard...</div>;
 
   return (
+    <>
     <div className="w-full space-y-8 pb-8 lg:space-y-10 lg:pb-12">
       
       {/* 1. FIGMA HEADER */}
@@ -40,6 +43,7 @@ export default function DashboardLobby() {
 
         <button
           type="button"
+          onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-300 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-200 md:w-auto"
         >
           <Plus size={18} /> Create New Book
@@ -77,7 +81,9 @@ export default function DashboardLobby() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Transactions</p>
-              <p className="text-lg font-bold text-white">---</p>
+              <p className="text-lg font-bold text-white">
+                {fintracks.reduce((sum, fintrack) => sum + (fintrack.transactionsCount || 0), 0)}
+              </p>
             </div>
           </div>
         </div>
@@ -97,10 +103,10 @@ export default function DashboardLobby() {
             <FintrackCard 
               key={book.id}
               title={book.title}
-              balance={book.amount}
-              income={12000} // You can update your backend to return these per book
-              expense={4000}
-              transactionsCount={12}
+              balance={book.balance || 0}
+              income={book.income || 0}
+              expense={book.expense || 0}
+              transactionsCount={book.transactionsCount || 0}
               onClick={() => {
                 setActiveFintrack(book.id);
                 router.push(`/dashboard/vault/${book.id}`);
@@ -111,6 +117,7 @@ export default function DashboardLobby() {
           {/* Add New Book Trigger */}
           <button
             type="button"
+            onClick={() => setIsCreateModalOpen(true)}
             className="rounded-[28px] border-2 border-dashed border-slate-800 flex flex-col items-center justify-center gap-4 py-14 text-slate-600 transition-all hover:border-teal-500/50 hover:bg-teal-500/5 hover:text-teal-400"
           >
             <div className="p-4 bg-slate-900 rounded-2xl">
@@ -122,5 +129,7 @@ export default function DashboardLobby() {
       </div>
 
     </div>
+    <CreateFintrackModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
+    </>
   );
 }

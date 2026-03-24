@@ -57,6 +57,15 @@ export const getStats = catchAsync(async (req: Request, res: Response): Promise<
 	res.status(httpStatus.OK).json(stats);
 });
 
+export const getVaultCategoryStats = catchAsync(async (req: Request, res: Response): Promise<void> => {
+	const { fintrackId } = req.params;
+	if (!fintrackId) {
+		throw new ApiError(400, "fintrackId is required");
+	}
+	const stats = await expenseService.getVaultCategoryStats(fintrackId, getAuthenticatedUserId(req));
+	res.status(httpStatus.OK).json(stats);
+});
+
 export const getExpense = catchAsync(async (req: Request, res: Response): Promise<void> => {
 	const expense = await expenseService.getExpenseById(getRequestId(req), getAuthenticatedUserId(req));
 

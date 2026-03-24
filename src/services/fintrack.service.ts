@@ -11,6 +11,9 @@ export interface CreateFintrackInput {
 
 export interface FintrackWithBalance {
 	balance: number;
+	income: number;
+	expense: number;
+	transactionsCount: number;
 	[key: string]: unknown;
 }
 
@@ -37,10 +40,17 @@ const withBalance = async (
 
 	const income = stats.find((s) => s._id === "INCOME")?.total || 0;
 	const expense = stats.find((s) => s._id === "EXPENSE")?.total || 0;
+	const transactionsCount = await Transaction.countDocuments({
+		fintrack: fintrack._id,
+		user: userObjectId,
+	});
 
 	return {
 		...fintrack.toJSON(),
 		balance: income - expense,
+		income,
+		expense,
+		transactionsCount,
 	};
 };
 

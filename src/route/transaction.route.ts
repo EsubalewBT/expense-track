@@ -125,6 +125,7 @@ router.get("/", expenseController.getExpenses);
  *                     type: number
  */
 router.get("/stats", expenseController.getStats);
+router.get("/vault-stats/:fintrackId", expenseController.getVaultCategoryStats);
 
 router.get("/:id", expenseController.getExpense);
 router.patch("/:id", validate(updateTransactionSchema), expenseController.updateExpense);

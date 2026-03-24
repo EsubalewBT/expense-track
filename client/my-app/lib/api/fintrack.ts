@@ -9,6 +9,9 @@ export interface Fintrack {
 	icon: 'wallet' | 'briefcase' | 'zap' | 'home' | 'piggy-bank' | 'trending-up';
 	color: string;
 	balance: number;
+	income: number;
+	expense: number;
+	transactionsCount: number;
 }
 
 export const FintrackApi = {
@@ -17,7 +20,7 @@ export const FintrackApi = {
 			useQuery({
 				queryKey: ['fintracks'],
 				queryFn: async () => {
-					const res = await api.get<Fintrack[]>('/fintracks');
+					const res = await api.get<Fintrack[]>('/api/fintrack');
 					return res.data;
 				},
 			}),
@@ -28,7 +31,7 @@ export const FintrackApi = {
 			const queryClient = useQueryClient();
 			return useMutation({
 				mutationFn: async (data: Partial<Fintrack>) => {
-					const res = await api.post('/fintracks', data);
+					const res = await api.post('/api/fintrack', data);
 					return res.data;
 				},
 				onSuccess: () => {
