@@ -116,7 +116,7 @@ export function CreateFintrackModal({ open, onOpenChange }: CreateFintrackModalP
 			<DialogContent className="overflow-hidden border border-[#263756]/85 bg-[#0d1834] p-0 text-[#dbe8ff] shadow-[0_28px_90px_rgba(0,0,0,0.65)] sm:max-w-130">
 				<div className="p-6 sm:p-7">
 					<DialogHeader className="space-y-1.5">
-						<DialogTitle className="text-3xl font-semibold tracking-tight text-[#e6efff]">Create New Cashbook</DialogTitle>
+						<DialogTitle className="text-3xl font-semibold tracking-tight text-[#e6efff]">Create New Book</DialogTitle>
 					</DialogHeader>
 
 					<form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-5" noValidate>

@@ -1,10 +1,18 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
-import { LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronDown, LogOut, UserCircle2 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type DashboardLayoutProps = {
 	children: ReactNode;
@@ -12,6 +20,8 @@ type DashboardLayoutProps = {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
 	const router = useRouter();
+	const pathname = usePathname();
+	const showBackButton = pathname !== '/dashboard';
 
 	useEffect(() => {
 		const token = window.localStorage.getItem('accessToken');
@@ -31,19 +41,44 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 		<div className="min-h-screen bg-[radial-gradient(circle_at_10%_20%,#1e3a8a20_0%,transparent_35%),radial-gradient(circle_at_95%_0%,#0f766e22_0%,transparent_30%),linear-gradient(180deg,#070b14_0%,#0b1220_45%,#0f172a_100%)] text-slate-100">
 			<header className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/65 px-4 py-3 backdrop-blur">
 				<div className="flex w-full flex-wrap items-center justify-between gap-2">
-					<div>
-						<p className="text-xs tracking-[0.2em] text-cyan-200/80">EXPENSEFLOW</p>
-						<p className="text-sm font-medium text-white">Dashboard</p>
+					<div className="flex items-center gap-3">
+						{showBackButton ? (
+							<Link
+								href="/dashboard"
+								className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+								aria-label="Back to dashboard"
+							>
+								<ArrowLeft size={16} />
+							</Link>
+						) : null}
+						<div>
+							<p className="text-xs tracking-[0.2em] text-cyan-200/80">EXPENSEFLOW</p>
+							<p className="text-sm font-medium text-white">Dashboard</p>
+						</div>
 					</div>
 					<div className="flex items-center gap-2">
-						<Button
-							variant="outline"
-							className="gap-2 border-red-300/50 bg-red-500/10 text-red-100 hover:bg-red-500/20 hover:text-red-50"
-							onClick={handleLogout}
-						>
-							<LogOut size={16} />
-							Sign Out
-						</Button>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button
+									type="button"
+									className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-100 transition hover:bg-white/10"
+								>
+									<span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 text-cyan-200">
+										<UserCircle2 size={16} />
+									</span>
+									<span className="hidden text-[11px] uppercase tracking-[0.18em] text-slate-300 sm:inline">Account</span>
+									<ChevronDown className="size-4 text-slate-400" />
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-44 border-white/10 bg-slate-950/95 text-slate-100">
+								<DropdownMenuLabel className="text-slate-400">Workspace</DropdownMenuLabel>
+								<DropdownMenuSeparator className="bg-white/10" />
+								<DropdownMenuItem variant="destructive" onClick={handleLogout}>
+									<LogOut className="size-4" />
+									Sign out
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					</div>
 				</div>
 			</header>

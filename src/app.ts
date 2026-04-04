@@ -3,7 +3,6 @@ import cors from 'cors';
 import express from 'express';
 import hpp from 'hpp';
 import rateLimit from 'express-rate-limit';
-import mongoSanitize from 'express-mongo-sanitize';
 import helmet from 'helmet';
 import passport from 'passport';
 import xss from 'xss';
@@ -68,23 +67,6 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(hpp());
 app.use((req, _res, next) => {
-  // Express 5 exposes `req.query` as a getter-only property.
-  // Sanitize payloads in place to avoid reassigning `req.query`.
-  if (req.body) {
-    mongoSanitize.sanitize(req.body);
-  }
-
-  if (req.params) {
-    mongoSanitize.sanitize(req.params);
-  }
-
-  if (req.query) {
-    mongoSanitize.sanitize(req.query as Record<string, unknown>);
-  }
-
-  next();
-});
-app.use((req, _res, next) => {
   sanitizeXss(req.body);
   sanitizeXss(req.params);
   sanitizeXss(req.query);
@@ -117,9 +99,9 @@ const apiLimiter = rateLimit({
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 
-app.use('/api/auth', authLimiter, authRouter);
-app.use('/api/expense', apiLimiter, expenseRouter);
-app.use('/api/fintrack', apiLimiter, fintrackRouter);
+app.use('/auth', authLimiter, authRouter);
+app.use('/expense', apiLimiter, expenseRouter);
+app.use('/fintrack', apiLimiter, fintrackRouter);
 app.use('/api/docs', docsRouter);
 app.use(errorConverter);
 app.use(errorHandler);

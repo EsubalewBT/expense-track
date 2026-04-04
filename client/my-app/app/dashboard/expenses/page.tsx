@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { AlertTriangle, ListOrdered } from 'lucide-react';
-import { useMemo, useSyncExternalStore, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 
 import AddExpenseSheet from '@/components/features/AddExpensesSheet';
 import EditExpenseSheet from '@/components/features/EditExpenseSheet';

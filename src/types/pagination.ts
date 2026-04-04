@@ -1,5 +1,3 @@
-import type { Model } from 'mongoose';
-
 export interface QueryResult<T = unknown> {
 	results: T[];
 	page: number;
@@ -13,11 +11,7 @@ export interface PaginateOptions {
 	projectBy?: string;
 	limit?: number | string;
 	page?: number | string;
+	fintrackId?: string;
 }
-
-export type PaginateModel<T> = Model<T> & {
-	paginate(filter: Record<string, unknown>, options?: PaginateOptions): Promise<QueryResult<T>>;
-};
-
 
 export type IOptions = PaginateOptions;

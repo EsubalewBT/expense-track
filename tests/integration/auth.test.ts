@@ -2,7 +2,7 @@ import request from 'supertest';
 import httpStatus from 'http-status';
 import app from '../../src/app';
 import setupTestDB from '../setupTestDb';
-import { User } from '../../src/model/user.model';
+import { prisma } from '../../src/lib/prisma';
 
 setupTestDB();
 
@@ -34,7 +34,9 @@ describe('Auth Routes', () => {
       expect(res.body.tokens).toHaveProperty('access');
       expect(res.body.tokens).toHaveProperty('refresh');
 
-      const dbUser = await User.findById(res.body.user.id);
+      const dbUser = await prisma.user.findUnique({
+        where: { id: res.body.user.id },
+      });
       expect(dbUser).toBeDefined();
       expect(dbUser?.password).not.toBe(newUser.password);
     });

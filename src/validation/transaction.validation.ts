@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { transactionCategories } from '../model/transaction.model';
+import { transactionCategories } from '../constants/transaction';
 
 export const createTransactionSchema = {
   body: Joi.object().keys({
@@ -8,13 +8,14 @@ export const createTransactionSchema = {
     type: Joi.string().required().valid('INCOME', 'EXPENSE'),
     category: Joi.string().required().valid(...transactionCategories),
     description: Joi.string().allow(''),
+    fintrackId: Joi.string().guid({ version: ['uuidv4'] }),
     date: Joi.date().optional(),
   }),
 };
 
 export const updateTransactionSchema = {
   params: Joi.object().keys({
-    id: Joi.string().required().length(24).hex(),
+    id: Joi.string().required().guid({ version: ['uuidv4'] }),
   }),
   body: Joi.object()
     .keys({

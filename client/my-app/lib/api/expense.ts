@@ -84,7 +84,7 @@ export const expenseQueryKeys = {
 };
 
 export async function createExpenseFn(expense: NewExpense): Promise<Expense> {
-	const response = await api.post<Expense>('/api/expense', expense);
+	const response = await api.post<Expense>('/expense', expense);
 	return response.data;
 }
 
@@ -92,17 +92,17 @@ export async function updateExpenseFn({
 	expenseId,
 	payload,
 }: UpdateExpenseMutationInput): Promise<Expense> {
-	const response = await api.patch<Expense>(`/api/expense/${expenseId}`, payload);
+	const response = await api.patch<Expense>(`/expense/${expenseId}`, payload);
 	return response.data;
 }
 
 export async function deleteExpenseFn(expenseId: string): Promise<DeleteExpenseResponse> {
-	const response = await api.delete<DeleteExpenseResponse>(`/api/expense/${expenseId}`);
+	const response = await api.delete<DeleteExpenseResponse>(`/expense/${expenseId}`);
 	return response.data;
 }
 
 export async function getExpensesFn(limit = 5): Promise<PaginatedResponse<Expense>> {
-	const response = await api.get<PaginatedResponse<Expense>>('/api/expense', {
+	const response = await api.get<PaginatedResponse<Expense>>('/expense', {
 		params: { limit },
 	});
 
@@ -114,7 +114,7 @@ export async function getExpenseListFn(
 ): Promise<PaginatedResponse<Expense>> {
 	const { page = 1, limit = 20, sortBy = 'date:desc' } = params;
 
-	const response = await api.get<PaginatedResponse<Expense>>('/api/expense', {
+	const response = await api.get<PaginatedResponse<Expense>>('/expense', {
 		params: { page, limit, sortBy },
 	});
 
@@ -122,12 +122,12 @@ export async function getExpenseListFn(
 }
 
 export async function getExpenseStatsFn(): Promise<ExpenseStat[]> {
-	const response = await api.get<ExpenseStat[]>('/api/expense/stats');
+	const response = await api.get<ExpenseStat[]>('/expense/stats');
 	return response.data;
 }
 
 export async function getGlobalStatsFn(): Promise<GlobalTransactionStat[]> {
-	const response = await api.get<GlobalTransactionStat[]>('/api/expense/stats');
+	const response = await api.get<GlobalTransactionStat[]>('/expense/stats');
 	return response.data;
 }
 

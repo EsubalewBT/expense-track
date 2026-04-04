@@ -1,14 +1,129 @@
-import mongoose from "mongoose";
-import {
-	Transaction,
-	TransactionAttributes,
-	TransactionDocument,
-} from "../model/transaction.model";
-import { IOptions, QueryResult } from "../model/plugins/paginate.types";
+import { Prisma, Transaction, TransactionType } from "@prisma/client";
 
-type CreateExpenseInput = Omit<TransactionAttributes, "user">;
+import { prisma } from "../lib/prisma";
+import { IOptions, QueryResult } from "../types/pagination";
+
+type CreateExpenseInput = {
+	title: string;
+	type: TransactionType;
+	amount: number;
+	category: string;
+	date?: Date | string;
+	description?: string;
+	fintrackId?: string;
+};
 type UpdateExpenseInput = Partial<CreateExpenseInput>;
-type ExpenseDocument = TransactionDocument;
+type ExpenseDocument = Transaction;
+
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 100;
+const DEFAULT_PAGE = 1;
+
+const toPositiveInt = (value: unknown, fallback: number): number => {
+	const parsed = Number.parseInt(String(value), 10);
+
+	if (!Number.isFinite(parsed) || parsed <= 0) {
+		return fallback;
+	}
+
+	return parsed;
+};
+
+const mapSortField = (field: string): keyof Prisma.TransactionOrderByWithRelationInput | null => {
+	const fieldMap: Record<string, keyof Prisma.TransactionOrderByWithRelationInput> = {
+		id: "id",
+		title: "title",
+		type: "type",
+		amount: "amount",
+		category: "category",
+		date: "date",
+		createdAt: "createdAt",
+		updatedAt: "updatedAt",
+	};
+
+	return fieldMap[field] ?? null;
+};
+
+const buildOrderBy = (sortBy?: string): Prisma.TransactionOrderByWithRelationInput[] => {
+	if (!sortBy) {
+		return [{ createdAt: "desc" }];
+	}
+
+	const orderBy = sortBy
+		.split(",")
+		.map((segment) => segment.trim())
+		.filter(Boolean)
+		.map((segment) => {
+			const [rawField, rawOrder] = segment.split(":").map((token) => token.trim());
+			const field = mapSortField(rawField || "");
+
+			if (!field) {
+				return null;
+			}
+
+			return {
+				[field]: rawOrder === "asc" ? "asc" : "desc",
+			} as Prisma.TransactionOrderByWithRelationInput;
+		})
+		.filter((value): value is Prisma.TransactionOrderByWithRelationInput => Boolean(value));
+
+	return orderBy.length > 0 ? orderBy : [{ createdAt: "desc" }];
+};
+
+const toDateOrUndefined = (value: Date | string | undefined): Date | undefined => {
+	if (!value) {
+		return undefined;
+	}
+
+	return value instanceof Date ? value : new Date(value);
+};
+
+const toCreateData = (expenseBody: CreateExpenseInput, userId: string): Prisma.TransactionUncheckedCreateInput => {
+	return {
+		title: expenseBody.title,
+		type: expenseBody.type,
+		amount: Number(expenseBody.amount),
+		category: expenseBody.category,
+		description: expenseBody.description,
+		date: toDateOrUndefined(expenseBody.date),
+		userId,
+		fintrackId: expenseBody.fintrackId || null,
+	};
+};
+
+const toUpdateData = (updateBody: UpdateExpenseInput): Prisma.TransactionUncheckedUpdateInput => {
+	const data: Prisma.TransactionUncheckedUpdateInput = {};
+
+	if (updateBody.title !== undefined) {
+		data.title = updateBody.title;
+	}
+
+	if (updateBody.type !== undefined) {
+		data.type = updateBody.type;
+	}
+
+	if (updateBody.amount !== undefined) {
+		data.amount = Number(updateBody.amount);
+	}
+
+	if (updateBody.category !== undefined) {
+		data.category = updateBody.category;
+	}
+
+	if (updateBody.description !== undefined) {
+		data.description = updateBody.description;
+	}
+
+	if (updateBody.date !== undefined) {
+		data.date = toDateOrUndefined(updateBody.date);
+	}
+
+	if (updateBody.fintrackId !== undefined) {
+		data.fintrackId = updateBody.fintrackId || null;
+	}
+
+	return data;
+};
 
 export interface ExpenseCategoryStat {
 	type: "INCOME" | "EXPENSE";
@@ -19,10 +134,10 @@ export const createExpense = async (
 	userId: string,
 	expenseBody: CreateExpenseInput
 ): Promise<ExpenseDocument> => {
-	const expense = await Transaction.create({
-		...expenseBody,
-		user: userId,
+	const expense = await prisma.transaction.create({
+		data: toCreateData(expenseBody, userId),
 	});
+
 	return expense;
 };
 
@@ -30,15 +145,39 @@ export const queryExpenses = async (
 	userId: string,
 	options: IOptions = {}
 ): Promise<QueryResult<ExpenseDocument>> => {
-	return Transaction.paginate({ user: userId }, options);
+	const limit = Math.min(toPositiveInt(options.limit, DEFAULT_LIMIT), MAX_LIMIT);
+	const page = toPositiveInt(options.page, DEFAULT_PAGE);
+	const skip = (page - 1) * limit;
+	const orderBy = buildOrderBy(options.sortBy);
+	const where: Prisma.TransactionWhereInput = {
+		userId,
+	};
+
+	if (options.fintrackId) {
+		where.fintrackId = String(options.fintrackId);
+	}
+
+	const [totalResults, results] = await Promise.all([
+		prisma.transaction.count({ where }),
+		prisma.transaction.findMany({
+			where,
+			orderBy,
+			skip,
+			take: limit,
+		}),
+	]);
+
+	return {
+		results,
+		page,
+		limit,
+		totalPages: Math.ceil(totalResults / limit),
+		totalResults,
+	};
 };
 
 export const getExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {
-	if (!mongoose.isValidObjectId(id)) {
-		return null;
-	}
-
-	return Transaction.findOne({ _id: id, user: userId });
+	return prisma.transaction.findFirst({ where: { id, userId } });
 };
 
 export const updateExpenseById = async (
@@ -46,79 +185,64 @@ export const updateExpenseById = async (
 	userId: string,
 	updateBody: UpdateExpenseInput
 ): Promise<ExpenseDocument | null> => {
-	if (!mongoose.isValidObjectId(id)) {
+	const expense = await prisma.transaction.findFirst({ where: { id, userId } });
+	if (!expense) {
 		return null;
 	}
 
-	const expense = await Transaction.findOneAndUpdate({ _id: id, user: userId }, updateBody, {
-		new: true,
-		runValidators: true,
+	return prisma.transaction.update({
+		where: { id },
+		data: toUpdateData(updateBody),
 	});
-
-	return expense;
 };
 
 export const deleteExpenseById = async (id: string, userId: string): Promise<ExpenseDocument | null> => {
-	if (!mongoose.isValidObjectId(id)) {
+	const expense = await prisma.transaction.findFirst({ where: { id, userId } });
+	if (!expense) {
 		return null;
 	}
 
-	const expense = await Transaction.findOneAndDelete({ _id: id, user: userId });
+	await prisma.transaction.delete({ where: { id } });
 	return expense;
 };
 
 export const getExpenseStats = async (userId: string): Promise<ExpenseCategoryStat[]> => {
-	if (!mongoose.isValidObjectId(userId)) {
-		return [];
-	}
+	const grouped = await prisma.transaction.groupBy({
+		by: ["type"],
+		where: { userId },
+		_sum: {
+			amount: true,
+		},
+	});
 
-	const userObjectId = new mongoose.Types.ObjectId(userId);
-
-	return Transaction.aggregate<ExpenseCategoryStat>([
-		{
-			$match: { user: userObjectId },
-		},
-		{
-			$group: {
-				_id: "$type",
-				total: { $sum: "$amount" },
-			},
-		},
-		{
-			$project: {
-				_id: 0,
-				type: "$_id",
-				total: 1,
-			},
-		},
-		{
-			$sort: { total: -1 },
-		},
-	]).exec();
+	return grouped
+		.map((item) => ({
+			type: item.type,
+			total: item._sum.amount ?? 0,
+		}))
+		.sort((a, b) => b.total - a.total);
 };
 
 /**
  * Get category breakdown for a specific vault (For the Donut Chart)
  */
 export const getVaultCategoryStats = async (fintrackId: string, userId: string) => {
-	if (!mongoose.isValidObjectId(fintrackId) || !mongoose.isValidObjectId(userId)) {
-		return [];
-	}
+	const grouped = await prisma.transaction.groupBy({
+		by: ["category"],
+		where: {
+			fintrackId,
+			userId,
+			type: "EXPENSE",
+		},
+		_sum: {
+			amount: true,
+		},
+	});
 
-	return Transaction.aggregate([
-		{
-			$match: {
-				fintrack: new mongoose.Types.ObjectId(fintrackId),
-				user: new mongoose.Types.ObjectId(userId),
-				type: "EXPENSE",
-			},
-		},
-		{
-			$group: {
-				_id: "$category",
-				total: { $sum: "$amount" },
-			},
-		},
-		{ $sort: { total: -1 } },
-	]);
+	return grouped
+		.map((item) => ({
+			_id: item.category,
+			total: item._sum.amount ?? 0,
+		}))
+		.sort((a, b) => b.total - a.total);
 };

@@ -14,15 +14,44 @@ export interface Fintrack {
 	transactionsCount: number;
 }
 
+export interface FintrackStat {
+	type: 'INCOME' | 'EXPENSE';
+	total: number;
+}
+
 export const FintrackApi = {
 	GetAll: {
 		useQuery: () =>
 			useQuery({
 				queryKey: ['fintracks'],
 				queryFn: async () => {
-					const res = await api.get<Fintrack[]>('/api/fintrack');
+					const res = await api.get<Fintrack[]>('/fintrack');
 					return res.data;
 				},
+			}),
+	},
+
+	GetById: {
+		useQuery: (id: string) =>
+			useQuery({
+				queryKey: ['fintracks', id],
+				queryFn: async () => {
+					const res = await api.get<Fintrack>(`/fintrack/${id}`);
+					return res.data;
+				},
+				enabled: Boolean(id),
+			}),
+	},
+
+	GetStats: {
+		useQuery: (id: string) =>
+			useQuery({
+				queryKey: ['fintracks', id, 'stats'],
+				queryFn: async () => {
+					const res = await api.get<FintrackStat[]>(`/fintrack/${id}/stats`);
+					return res.data;
+				},
+				enabled: Boolean(id),
 			}),
 	},
 
@@ -31,7 +60,7 @@ export const FintrackApi = {
 			const queryClient = useQueryClient();
 			return useMutation({
 				mutationFn: async (data: Partial<Fintrack>) => {
-					const res = await api.post('/api/fintrack', data);
+					const res = await api.post('/fintrack', data);
 					return res.data;
 				},
 				onSuccess: () => {

@@ -80,7 +80,7 @@ async function refreshAccessToken(): Promise<string | null> {
 	}
 
 	if (!refreshPromise) {
-		const refreshUrl = `${getBaseUrl()}/api/auth/refresh-tokens`;
+		const refreshUrl = `${getBaseUrl()}/auth/refresh-tokens`;
 		refreshPromise = axios
 			.post<RefreshTokensResponse>(
 				refreshUrl,
@@ -131,7 +131,7 @@ api.interceptors.response.use(
 
 		const originalRequest = error.config as RetriableRequestConfig | undefined;
 		const requestUrl = originalRequest?.url || '';
-		const isRefreshRequest = requestUrl.includes('/api/auth/refresh-tokens');
+		const isRefreshRequest = requestUrl.includes('/auth/refresh-tokens');
 
 		if (!originalRequest || originalRequest._retry || isRefreshRequest) {
 			clearAuthStorage();

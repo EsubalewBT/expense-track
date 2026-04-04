@@ -3,7 +3,7 @@ import {
 	UseMutationResult,
 	useMutation,
 } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 import { api } from './axios';
 
@@ -58,13 +58,21 @@ export interface ApiErrorResponse {
 	message?: string;
 }
 
+export function getAuthErrorMessage(error: unknown, fallback: string) {
+	if (axios.isAxiosError<ApiErrorResponse>(error)) {
+		return error.response?.data?.message || fallback;
+	}
+
+	return fallback;
+}
+
 export async function loginFn(credentials: LoginCredentials): Promise<AuthResponse> {
-	const response = await api.post<AuthResponse>('/api/auth/login', credentials);
+	const response = await api.post<AuthResponse>('/auth/login', credentials);
 	return response.data;
 }
 
 export async function registerFn(payload: RegisterPayload): Promise<AuthResponse> {
-	const response = await api.post<AuthResponse>('/api/auth/register', payload);
+	const response = await api.post<AuthResponse>('/auth/register', payload);
 	return response.data;
 }
 
@@ -72,7 +80,7 @@ export async function forgotPasswordFn(
 	payload: ForgotPasswordPayload
 ): Promise<ForgotPasswordResponse | undefined> {
 	const response = await api.post<ForgotPasswordResponse>(
-		'/api/auth/forgot-password',
+		'/auth/forgot-password',
 		payload
 	);
 	return response.data;
@@ -82,7 +90,7 @@ export async function resetPasswordFn(
 	payload: ResetPasswordPayload
 ): Promise<void> {
 	await api.post(
-		`/api/auth/reset-password?token=${encodeURIComponent(payload.token)}`,
+		`/auth/reset-password?token=${encodeURIComponent(payload.token)}`,
 		{ password: payload.password }
 	);
 }

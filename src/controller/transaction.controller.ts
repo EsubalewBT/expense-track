@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import httpStatus from "http-status";
 
 import * as expenseService from "../services/transaction.service";
-import { IOptions } from "../model/plugins/paginate.types";
+import { IOptions } from "../types/pagination";
 import { ApiError } from "../utils/ApiError";
 import catchAsync from "../utils/catchAsync";
 
@@ -10,12 +10,24 @@ const getRequestId = (req: Request): string => {
 	return Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 };
 
+const getRequestParam = (value: string | string[] | undefined): string | undefined => {
+	if (Array.isArray(value)) {
+		return value[0] ? String(value[0]) : undefined;
+	}
+
+	if (value === undefined || value === null) {
+		return undefined;
+	}
+
+	return String(value);
+};
+
 const getAuthenticatedUserId = (req: Request): string => {
-	if (!req.user?._id) {
+	if (!req.user?.id) {
 		throw new ApiError(401, "Please authenticate");
 	}
 
-	return req.user._id.toString();
+	return req.user.id;
 };
 
 const firstQueryValue = (value: unknown): string | undefined => {
@@ -36,6 +48,7 @@ const getPaginationOptions = (req: Request): IOptions => {
 		projectBy: firstQueryValue(req.query.projectBy),
 		limit: firstQueryValue(req.query.limit),
 		page: firstQueryValue(req.query.page),
+		fintrackId: firstQueryValue(req.query.fintrackId),
 	};
 };
 
@@ -58,7 +71,7 @@ export const getStats = catchAsync(async (req: Request, res: Response): Promise<
 });
 
 export const getVaultCategoryStats = catchAsync(async (req: Request, res: Response): Promise<void> => {
-	const { fintrackId } = req.params;
+	const fintrackId = getRequestParam(req.params.fintrackId);
 	if (!fintrackId) {
 		throw new ApiError(400, "fintrackId is required");
 	}

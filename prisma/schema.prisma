@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TokenType {
+  access
+  refresh
+  resetPassword
+  verifyEmail
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  fintracks    Fintrack[]
+  transactions Transaction[]
+  tokens       Token[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Fintrack {
+  id           String        @id @default(uuid())
+  title        String
+  description  String?
+  icon         String        @default("wallet")
+  color        String        @default("teal")
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  title       String
+  type        TransactionType
+  amount      Float
+  category    String
+  date        DateTime        @default(now())
+  description String?
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fintrackId  String?
+  fintrack    Fintrack?       @relation(fields: [fintrackId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId, date])
+  @@index([fintrackId])
+}
+
+model Token {
+  id          String    @id @default(uuid())
+  token       String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        TokenType
+  expires     DateTime
+  blacklisted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, type])
+  @@index([expires])
+}
+
+// A tiny test model to see if it works
+model Test {
+  id String @id @default(uuid())
+}

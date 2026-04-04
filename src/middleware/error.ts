@@ -1,5 +1,4 @@
 import { ErrorRequestHandler } from 'express';
-import mongoose from 'mongoose';
 import httpStatus from 'http-status';
 
 import { config } from '../config/config';
@@ -11,11 +10,14 @@ type ErrorWithStatus = {
 	stack?: string;
 };
 
-const isMongooseBadRequestError = (error: unknown): boolean => {
-	return (
-		error instanceof mongoose.Error.ValidationError ||
-		error instanceof mongoose.Error.CastError
-	);
+const isPrismaBadRequestError = (error: unknown): boolean => {
+	const code = (error as { code?: unknown })?.code;
+
+	if (typeof code !== 'string') {
+		return false;
+	}
+
+	return ['P2000', 'P2002', 'P2003', 'P2011', 'P2025'].includes(code);
 };
 
 const getSafeMessage = (statusCode: number, error: ErrorWithStatus): string => {
@@ -39,7 +41,7 @@ export const errorConverter: ErrorRequestHandler = (err, _req, _res, next) => {
 	const statusCode =
 		typeof incomingError.statusCode === 'number'
 			? incomingError.statusCode
-			: isMongooseBadRequestError(err)
+			: isPrismaBadRequestError(err)
 				? httpStatus.BAD_REQUEST
 				: httpStatus.INTERNAL_SERVER_ERROR;
 

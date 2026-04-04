@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
+    "dev:turbo:node20": "npx -y -p node@20 node ./node_modules/next/dist/bin/next dev --turbopack",
+    "clean:next": "node -e \"const fs=require('fs');fs.rmSync('.next',{recursive:true,force:true});console.log('Removed .next cache');\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

@@ -2,18 +2,25 @@ import passport from "passport";
 import httpStatus from "http-status";
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../utils/ApiError";
-import { UserDocument } from "../model/user.model";
+
+type AuthenticatedUser = {
+	id: string;
+	name: string;
+	email: string;
+	createdAt: Date;
+	updatedAt: Date;
+};
 
 // Extend Express Request user type for downstream handlers.
 declare global {
 	namespace Express {
-		interface User extends UserDocument {}
+		interface User extends AuthenticatedUser {}
 	}
 }
 
 const verifyCallback =
 	(req: Request, resolve: () => void, reject: (error: ApiError) => void) =>
-	async (err: unknown, user: UserDocument | false, info: unknown) => {
+	async (err: unknown, user: AuthenticatedUser | false, info: unknown) => {
 		if (err || info || !user) {
 			return reject(
 				new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate")

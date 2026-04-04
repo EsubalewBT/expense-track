@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Manrope, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import QueryProvider from '@/components/providers/QueryProvider';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const manrope = Manrope({
@@ -38,6 +39,7 @@ export default function RootLayout({
         className={`${manrope.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased min-h-screen`}
       >
         <QueryProvider>{children}</QueryProvider>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

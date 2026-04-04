@@ -9,7 +9,7 @@ import * as emailService from "../services/email.service";
 export const register = catchAsync(async (req: Request, res: Response) => {
 	const user = await authService.registerUser(req.body);
 	const verifyEmailToken = await tokenService.generateVerifyEmailToken({
-		id: user._id.toString(),
+		id: user.id,
 	});
 
 	try {
@@ -19,7 +19,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 	}
 
 	const tokens = await tokenService.generateAuthTokens({
-		id: user._id.toString(),
+		id: user.id,
 	});
 
 	res.status(httpStatus.CREATED).json({ user, tokens });
@@ -32,7 +32,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 		password
 	);
 	const tokens = await tokenService.generateAuthTokens({
-		id: user._id.toString(),
+		id: user.id,
 	});
 
 	res.status(httpStatus.OK).json({ user, tokens });

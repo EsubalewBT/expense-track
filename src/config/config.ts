@@ -19,7 +19,8 @@ const corsOrigins = String(envVars.CORS_ORIGIN || "")
 export const config = {
     env: envVars.NODE_ENV,
     port: envVars.PORT,
-    dbConnection: envVars.DB_CONNECTION,
+    databaseUrl: envVars.DATABASE_URL,
+    directUrl: envVars.DIRECT_URL,
     corsOrigins,
     jwt: {
         secret: envVars.JWT_SECRET,

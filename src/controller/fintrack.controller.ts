@@ -10,11 +10,11 @@ const getRequestId = (req: Request): string => {
 };
 
 const getAuthenticatedUserId = (req: Request): string => {
-  if (!req.user?._id) {
+  if (!req.user?.id) {
     throw new ApiError(401, 'Please authenticate');
   }
 
-  return req.user._id.toString();
+  return req.user.id;
 };
 
 export const createFintrack = catchAsync(async (req: Request, res: Response): Promise<void> => {
@@ -62,4 +62,12 @@ export const deleteFintrack = catchAsync(async (req: Request, res: Response): Pr
     message: 'Fintrack deleted successfully',
     fintrack,
   });
+});
+
+export const getVaultStats = catchAsync(async (req: Request, res: Response): Promise<void> => {
+  const vaultId = getRequestId(req);
+  const userId = getAuthenticatedUserId(req);
+  // Call the service method to get stats for this vault and user
+  const stats = await fintrackService.getVaultStats(vaultId, userId);
+  res.status(httpStatus.OK).json(stats);
 });

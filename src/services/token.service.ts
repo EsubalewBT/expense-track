@@ -1,19 +1,23 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import dayjs, { Dayjs } from "dayjs";
 import httpStatus from "http-status";
-import mongoose from "mongoose";
+import { Token, TokenType } from "@prisma/client";
+
 import { config } from "../config/config";
 import { tokenTypes } from "../config/token";
-import { Token, TokenAttributes } from "../model/token.model";
+import { prisma } from "../lib/prisma";
 import * as userService from "./user.service";
 import { ApiError } from "../utils/ApiError";
 
-type TokenDocument = mongoose.HydratedDocument<TokenAttributes>;
+type TokenDocument = Token;
+type TokenTypeValue = (typeof tokenTypes)[keyof typeof tokenTypes];
+
+const toTokenType = (type: TokenTypeValue): TokenType => type as TokenType;
 
 export const generateToken = (
-	userId: string | mongoose.Types.ObjectId,
+	userId: string,
 	expires: Dayjs,
-	type: string,
+	type: TokenTypeValue,
 	secret = config.jwt.secret
 ): string => {
 	const payload = {
@@ -28,17 +32,19 @@ export const generateToken = (
 
 export const saveToken = async (
 	token: string,
-	userId: string | mongoose.Types.ObjectId,
+	userId: string,
 	expires: Dayjs,
-	type: string,
+	type: TokenTypeValue,
 	blacklisted = false
 ): Promise<TokenDocument> => {
-	const tokenDoc = await Token.create({
-		token,
-		user: userId,
-		expires: expires.toDate(),
-		type,
-		blacklisted,
+	const tokenDoc = await prisma.token.create({
+		data: {
+			token,
+			userId,
+			expires: expires.toDate(),
+			type: toTokenType(type),
+			blacklisted,
+		},
 	});
 
 	return tokenDoc;
@@ -46,14 +52,22 @@ export const saveToken = async (
 
 export const verifyToken = async (
 	token: string,
-	type: string
+	type: TokenTypeValue
 ): Promise<TokenDocument> => {
 	const payload = jwt.verify(token, config.jwt.secret) as JwtPayload;
-	const tokenDoc = await Token.findOne({
-		token,
-		type,
-		user: payload.sub,
-		blacklisted: false,
+	const subject = typeof payload.sub === "string" ? payload.sub : undefined;
+
+	if (!subject) {
+		throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid token payload");
+	}
+
+	const tokenDoc = await prisma.token.findFirst({
+		where: {
+			token,
+			type: toTokenType(type),
+			userId: subject,
+			blacklisted: false,
+		},
 	});
 
 	if (!tokenDoc) {
@@ -109,16 +123,14 @@ export const refreshAuthTokens = async (refreshToken: string) => {
 			refreshToken,
 			tokenTypes.REFRESH
 		);
-		const user = await userService.getUserById(
-			refreshTokenDoc.user.toString()
-		);
+		const user = await userService.getUserById(refreshTokenDoc.userId);
 
 		if (!user) {
 			throw new ApiError(httpStatus.UNAUTHORIZED, "User not found");
 		}
 
-		await refreshTokenDoc.deleteOne();
-		return generateAuthTokens({ id: user._id.toString() });
+		await prisma.token.delete({ where: { id: refreshTokenDoc.id } });
+		return generateAuthTokens({ id: user.id });
 	} catch (error) {
 		throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
 	}
@@ -156,7 +168,7 @@ export const generateResetPasswordToken = async (
 		throw new ApiError(httpStatus.NOT_FOUND, "No users found with this email");
 	}
 
-	const userId = user._id.toString();
+	const userId = user.id;
 
 	const expires = dayjs().add(config.jwt.refreshExpirationDays, "minutes");
 	const resetPasswordToken = generateToken(

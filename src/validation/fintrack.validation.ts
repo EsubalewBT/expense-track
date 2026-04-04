@@ -15,7 +15,7 @@ export const createFintrackSchema = {
 
 export const updateFintrackSchema = {
   params: Joi.object().keys({
-    id: Joi.string().required().length(24).hex(),
+    id: Joi.string().required().guid({ version: ['uuidv4'] }),
   }),
   body: Joi.object()
     .keys({
@@ -29,12 +29,12 @@ export const updateFintrackSchema = {
 
 export const getFintrackSchema = {
   params: Joi.object().keys({
-    id: Joi.string().required().length(24).hex(),
+    id: Joi.string().required().guid({ version: ['uuidv4'] }),
   }),
 };
 
 export const deleteFintrackSchema = {
   params: Joi.object().keys({
-    id: Joi.string().required().length(24).hex(),
+    id: Joi.string().required().guid({ version: ['uuidv4'] }),
   }),
 };

@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
 import { config } from "./config/config";
+import { prisma } from "./lib/prisma";
 import app from "./app";
 
 export const connectDB = async () => {
     try {
-        await mongoose.connect(config.dbConnection);
+        await prisma.$connect();
+        await prisma.$queryRaw`SELECT 1`;
         console.log("Database connection successful");
     } catch (error) {
         console.error("Database connection error:", error);

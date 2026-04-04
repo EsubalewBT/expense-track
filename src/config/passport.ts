@@ -1,7 +1,7 @@
 import { Strategy as JwtStrategy, ExtractJwt, VerifyCallback } from "passport-jwt";
 import { config } from "../config/config";
 import { tokenTypes } from "../config/token";
-import { User } from "../model/user.model";
+import { prisma } from "../lib/prisma";
 
 const jwtOptions = {
 	secretOrKey: config.jwt.secret,
@@ -22,7 +22,21 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
 			return done(null, false);
 		}
 
-		const user = await User.findById(payload.sub);
+		const subject = typeof payload.sub === "string" ? payload.sub : undefined;
+		if (!subject) {
+			return done(null, false);
+		}
+
+		const user = await prisma.user.findUnique({
+			where: { id: subject },
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				createdAt: true,
+				updatedAt: true,
+			},
+		});
 		if (!user) {
 			return done(null, false);
 		}

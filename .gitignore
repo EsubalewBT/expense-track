@@ -24,3 +24,4 @@ secrets.local.*
 
 # Postman local files
 postman/
+/src/generated/prisma
