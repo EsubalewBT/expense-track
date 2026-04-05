@@ -21,6 +21,7 @@ export interface VaultTransaction {
 	category: string;
 	description?: string;
 	date: string;
+	runningBalance?: number;
 	fintrackId?: string | null;
 	createdAt?: string;
 	updatedAt?: string;

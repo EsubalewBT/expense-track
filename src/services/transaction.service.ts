@@ -14,6 +14,7 @@ type CreateExpenseInput = {
 };
 type UpdateExpenseInput = Partial<CreateExpenseInput>;
 type ExpenseDocument = Transaction;
+export type TransactionWithBalance = Transaction & { runningBalance?: number };
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
@@ -44,6 +45,38 @@ const mapSortField = (field: string): keyof Prisma.TransactionOrderByWithRelatio
 	return fieldMap[field] ?? null;
 };
 
+type SortSegment = {
+	field: keyof Prisma.TransactionOrderByWithRelationInput;
+	direction: "asc" | "desc";
+};
+
+const parseSortBySegments = (sortBy?: string): SortSegment[] => {
+	if (!sortBy) {
+		return [{ field: "createdAt", direction: "desc" }];
+	}
+
+	const segments = sortBy
+		.split(",")
+		.map((segment) => segment.trim())
+		.filter(Boolean)
+		.map((segment) => {
+			const [rawField, rawOrder] = segment.split(":").map((token) => token.trim());
+			const field = mapSortField(rawField || "");
+
+			if (!field) {
+				return null;
+			}
+
+			return {
+				field,
+				direction: rawOrder === "asc" ? "asc" : "desc",
+			} satisfies SortSegment;
+		})
+		.filter((value): value is SortSegment => Boolean(value));
+
+	return segments.length > 0 ? segments : [{ field: "createdAt", direction: "desc" }];
+};
+
 const buildOrderBy = (sortBy?: string): Prisma.TransactionOrderByWithRelationInput[] => {
 	if (!sortBy) {
 		return [{ createdAt: "desc" }];
@@ -68,6 +101,15 @@ const buildOrderBy = (sortBy?: string): Prisma.TransactionOrderByWithRelationInp
 		.filter((value): value is Prisma.TransactionOrderByWithRelationInput => Boolean(value));
 
 	return orderBy.length > 0 ? orderBy : [{ createdAt: "desc" }];
+};
+
+const buildSqlOrderBy = (sortBy?: string): Prisma.Sql => {
+	const segments = parseSortBySegments(sortBy);
+	const clauses = segments.map((segment) =>
+		Prisma.sql`${Prisma.raw(`"${segment.field}"`)} ${Prisma.raw(segment.direction.toUpperCase())}`
+	);
+
+	return Prisma.sql`ORDER BY ${Prisma.join(clauses, ', ')}`;
 };
 
 const toDateOrUndefined = (value: Date | string | undefined): Date | undefined => {
@@ -144,7 +186,11 @@ export const createExpense = async (
 export const queryExpenses = async (
 	userId: string,
 	options: IOptions = {}
-): Promise<QueryResult<ExpenseDocument>> => {
+): Promise<QueryResult<TransactionWithBalance>> => {
+	if (options.fintrackId) {
+		return getVaultTransactionsWithBalance(String(options.fintrackId), userId, options);
+	}
+
 	const limit = Math.min(toPositiveInt(options.limit, DEFAULT_LIMIT), MAX_LIMIT);
 	const page = toPositiveInt(options.page, DEFAULT_PAGE);
 	const skip = (page - 1) * limit;
@@ -152,10 +198,6 @@ export const queryExpenses = async (
 	const where: Prisma.TransactionWhereInput = {
 		userId,
 	};
-
-	if (options.fintrackId) {
-		where.fintrackId = String(options.fintrackId);
-	}
 
 	const [totalResults, results] = await Promise.all([
 		prisma.transaction.count({ where }),
@@ -165,6 +207,47 @@ export const queryExpenses = async (
 			skip,
 			take: limit,
 		}),
+	]);
+
+	return {
+		results,
+		page,
+		limit,
+		totalPages: Math.ceil(totalResults / limit),
+		totalResults,
+	};
+};
+
+export const getVaultTransactionsWithBalance = async (
+	fintrackId: string,
+	userId: string,
+	options: IOptions = {}
+): Promise<QueryResult<TransactionWithBalance>> => {
+	const limit = Math.min(toPositiveInt(options.limit, DEFAULT_LIMIT), MAX_LIMIT);
+	const page = toPositiveInt(options.page, DEFAULT_PAGE);
+	const skip = (page - 1) * limit;
+	const orderBySql = buildSqlOrderBy(options.sortBy);
+
+	const [totalResults, results] = await Promise.all([
+		prisma.transaction.count({
+			where: {
+				fintrackId,
+				userId,
+			},
+		}),
+		prisma.$queryRaw<TransactionWithBalance[]>`
+			SELECT *
+			FROM (
+				SELECT
+					"Transaction".*,
+					SUM(CASE WHEN type = 'INCOME' THEN amount ELSE -amount END)
+						OVER (PARTITION BY "fintrackId" ORDER BY date ASC, "id" ASC) AS "runningBalance"
+				FROM "Transaction"
+				WHERE "fintrackId" = ${fintrackId} AND "userId" = ${userId}
+			) AS "transactionWithBalance"
+			${orderBySql}
+			LIMIT ${limit} OFFSET ${skip}
+		`,
 	]);
 
 	return {

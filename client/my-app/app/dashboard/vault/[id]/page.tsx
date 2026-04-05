@@ -16,7 +16,7 @@ import {
 	XAxis,
 	YAxis,
 } from 'recharts';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import VaultHeader from '@/components/features/VaultHeader';
@@ -71,6 +71,7 @@ type NormalizedStat = {
 type TimeRange = 'all' | 'week' | 'month' | 'year';
 type TransactionMode = 'INCOME' | 'EXPENSE';
 type PaymentMode = 'BANK' | 'CASH';
+type VaultTab = 'transactions' | 'analytics';
 
 const TIME_RANGE_OPTIONS: Array<{ value: TimeRange; label: string }> = [
 	{ value: 'all', label: 'All Time' },
@@ -201,6 +202,11 @@ function HeatmapCell({ count, maxCount }: { count: number; maxCount: number }) {
 export default function VaultPage() {
 	const params = useParams<{ id: string }>();
 	const vaultId = Array.isArray(params?.id) ? params.id[0] : (params?.id || '');
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const tabParam = searchParams.get('tab');
+	const activeTab: VaultTab = tabParam === 'analytics' ? 'analytics' : 'transactions';
 
 	const [searchTerm, setSearchTerm] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState('all');
@@ -216,6 +222,18 @@ export default function VaultPage() {
 	const [recordError, setRecordError] = useState<string | null>(null);
 	const [transactionToDelete, setTransactionToDelete] = useState<VaultTransaction | null>(null);
 	const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
+
+	const handleTabChange = (value: string) => {
+		const nextTab: VaultTab = value === 'analytics' ? 'analytics' : 'transactions';
+		const params = new URLSearchParams(searchParams.toString());
+		if (nextTab === 'transactions') {
+			params.delete('tab');
+		} else {
+			params.set('tab', nextTab);
+		}
+		const query = params.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+	};
 
 	const deleteTransactionMutation = TransactionApi.Delete.useMutation({
 		onMutate: ({ transactionId }) => {
@@ -393,18 +411,12 @@ export default function VaultPage() {
 
 	const transactionsWithBalance = useMemo(
 		() =>
-			sortedFilteredTransactions.reduce<
-				Array<{ tx: VaultTransaction; signedAmount: number; rowBalance: number }>
-			>((rows, tx, index) => {
-				const signedAmount = getSignedAmount(tx);
-				const rowBalance =
-					index === 0
-						? netBalance
-						: rows[index - 1].rowBalance - rows[index - 1].signedAmount;
-
-				return [...rows, { tx, signedAmount, rowBalance }];
-			}, []),
-		[netBalance, sortedFilteredTransactions]
+			sortedFilteredTransactions.map((tx) => ({
+				tx,
+				signedAmount: getSignedAmount(tx),
+				rowBalance: toSafeNumber(tx.runningBalance),
+			})),
+		[sortedFilteredTransactions]
 	);
 
 	const averageTransaction = useMemo(() => {
@@ -555,7 +567,7 @@ export default function VaultPage() {
 				totalOut={totalOut}
 			/>
 
-			<Tabs defaultValue="transactions" className="space-y-4">
+			<Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<div className="flex items-center gap-2">
 						<Button
